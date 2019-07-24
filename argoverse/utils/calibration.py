@@ -148,7 +148,7 @@ class Calibration:
         Returns:
             np.array: nx3 points in ego coord.
         """
-        return np.linalg.inv((self.extrinsic)).dot(self.cart2hom(pts_3d_rect).transpose())
+        return np.linalg.inv((self.extrinsic)).dot(self.cart2hom(pts_3d_rect).transpose()).transpose()
 
     # ===========================
     # ------- 2d to 3d ----------
@@ -164,7 +164,8 @@ class Calibration:
             nx3 points in ego coord.
         """
 
-        return np.linalg.inv(self.extrinsic).dot(self.cart2hom(uv_depth).transpose()).transpose()[:, 0:3]
+        pts_3d_rect = self.project_image_to_cam(uv_depth)
+        return self.project_cam_to_ego(pts_3d_rect)
 
     def project_image_to_cam(self, uv_depth: np.array) -> np.ndarray:
         """ Project 2D image with depth to camera coordinate.
@@ -176,9 +177,19 @@ class Calibration:
         Returns:
             nx3 points in camera coord.
         """
+        # modified by Mars, by referring to KITTI utils functioin below:
+        # https://github.com/MengshiLi/pseudo_lidar/blob/psmnet_train/preprocessing/kitti_util.py
 
-        return uv_depth
+        n = uv_depth.shape[0]
+        x = ((uv_depth[:, 0] - self.K[0,2]) * uv_depth[:, 2]) / self.K[0,0]
+        y = ((uv_depth[:, 1] - self.K[1,2]) * uv_depth[:, 2]) / self.K[1,1]
+        pts_3d_rect = np.zeros((n, 3))
+        pts_3d_rect[:, 0] = x
+        pts_3d_rect[:, 1] = y
+        pts_3d_rect[:, 2] = uv_depth[:, 2]
+        return pts_3d_rect
 
+        
 
 def load_image(img_filename: Union[str, Path]) -> np.ndarray:
     """Load image.

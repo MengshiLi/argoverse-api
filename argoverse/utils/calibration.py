@@ -125,6 +125,9 @@ class Calibration:
         uv[0:2, :] /= uv[2, :]
         return uv.transpose()
 
+    # ===========================
+    # ------- 3d to 3d ----------
+    # ===========================
     def project_ego_to_cam(self, pts_3d_ego: np.array) -> np.ndarray:
         """Project egovehicle point onto camera frame.
 
@@ -148,7 +151,7 @@ class Calibration:
         Returns:
             np.array: nx3 points in ego coord.
         """
-        return np.linalg.inv((self.extrinsic)).dot(self.cart2hom(pts_3d_rect).transpose()).transpose()
+        return np.linalg.inv((self.extrinsic)).dot(self.cart2hom(pts_3d_rect).transpose()).transpose()[:,:3]
 
     # ===========================
     # ------- 2d to 3d ----------
